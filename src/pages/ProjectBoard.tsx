@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { DndContext, DragEndEvent, closestCorners } from '@dnd-kit/core';
-import { Navbar } from '@/components/Navbar';
-import { KanbanColumn } from '@/components/KanbanColumn';
-import { TaskModal } from '@/components/TaskModal';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import { useUI } from '@/lib/uiStore';
-import { toast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { DndContext, DragEndEvent, closestCorners } from "@dnd-kit/core";
+import { Navbar } from "@/components/Navbar";
+import { KanbanColumn } from "@/components/KanbanColumn";
+import { TaskModal } from "@/components/TaskModal";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { useUI } from "@/lib/uiStore";
+import { toast } from "@/lib/hooks/use-toast";
 
 export default function ProjectBoard() {
   const { id } = useParams<{ id: string }>();
@@ -15,11 +15,11 @@ export default function ProjectBoard() {
   const [tasks] = useState<any[]>([]);
 
   const handleDragEnd = (event: DragEndEvent) => {
-    toast({ title: 'Task moved' });
+    toast({ title: "Task moved" });
   };
 
   const handleTaskSave = async (data: any) => {
-    toast({ title: 'Task saved' });
+    toast({ title: "Task saved" });
   };
 
   return (
@@ -29,7 +29,9 @@ export default function ProjectBoard() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Project Board</h1>
-            <p className="text-muted-foreground mt-1">Manage your tasks with drag and drop</p>
+            <p className="text-muted-foreground mt-1">
+              Manage your tasks with drag and drop
+            </p>
           </div>
           <Button onClick={() => openTaskModal()}>
             <Plus className="mr-2 h-4 w-4" />

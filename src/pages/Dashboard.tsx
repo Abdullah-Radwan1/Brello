@@ -1,29 +1,19 @@
-import { useNavigate } from 'react-router-dom';
-import { Navbar } from '@/components/Navbar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, FolderKanban, BarChart3 } from 'lucide-react';
-
-const projects = [
-  {
-    id: '1',
-    name: 'Website Redesign',
-    description: 'Redesign company website with modern UI',
-  },
-  {
-    id: '2',
-    name: 'Mobile App Development',
-    description: 'Build iOS and Android mobile applications',
-  },
-  {
-    id: '3',
-    name: 'Marketing Campaign',
-    description: 'Q1 2024 marketing campaign planning',
-  },
-];
+import { useNavigate } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Plus, FolderKanban, BarChart3 } from "lucide-react";
+import { useProjects } from "@/lib/hooks/use_projects";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { data: projects, isLoading, isError, error } = useProjects();
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,19 +27,24 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => navigate('/analytics')} variant="outline">
+            <Button onClick={() => navigate("/analytics")} variant="outline">
               <BarChart3 className="mr-2 h-4 w-4" />
               Analytics
             </Button>
-            <Button>
+            <Button onClick={() => navigate("/projects/new")}>
               <Plus className="mr-2 h-4 w-4" />
               New Project
             </Button>
           </div>
         </div>
 
+        {/* Loading and error states */}
+        {isLoading && <div>Loading projects...</div>}
+        {isError && <div className="text-red-500">Error: {error?.message}</div>}
+
+        {/* Projects grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
+          {projects?.map((project) => (
             <Card
               key={project.id}
               className="cursor-pointer transition-all hover:shadow-md"
@@ -65,7 +60,14 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="outline" className="w-full">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/projects/${project.id}`);
+                  }}
+                >
                   View Board
                 </Button>
               </CardContent>

@@ -1,18 +1,24 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/lib/auth';
-import { toast } from '@/hooks/use-toast';
-import { LayoutDashboard } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "@/lib/hooks/use-toast";
+import { LayoutDashboard } from "lucide-react";
+import axios from "axios";
+import { signin } from "@/api/auth";
 
-export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function Signin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,17 +26,27 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      // Send login request to backend
+
+      const { message } = await signin(email, password);
+
+      // success message
       toast({
-        title: 'Success',
-        description: 'Logged in successfully',
+        title: "Success",
+        description: message || "Logged in successfully",
       });
-      navigate('/dashboard');
-    } catch (error) {
+
+      // NOTE: access_token is HTTP-only, cannot be read in JS
+      // For testing, you can confirm cookie is set in browser DevTools -> Application -> Cookies
+      console.log("Login successful, cookie should be set automatically");
+
+      // navigate to dashboard
+      navigate("/dashboard");
+    } catch (err: any) {
       toast({
-        title: 'Error',
-        description: 'Invalid credentials',
-        variant: 'destructive',
+        title: "Error",
+        description: err.response?.data?.message || "Invalid credentials",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -45,7 +61,9 @@ export default function Login() {
             <LayoutDashboard className="h-12 w-12 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,12 +89,12 @@ export default function Login() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary hover:underline">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-primary hover:underline">
               Register
             </Link>
           </div>
