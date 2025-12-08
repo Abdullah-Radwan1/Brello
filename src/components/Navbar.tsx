@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LayoutDashboard, LogOut, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -9,9 +9,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUser } from "@/lib/hooks/useUserContext";
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
+  const { user, setUser } = useUser();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Optionally, call /auth/logout endpoint to clear cookie
+    setUser(null);
+    navigate("/signin");
+  };
 
   return (
     <nav className="border-b bg-card">
@@ -45,7 +54,7 @@ export function Navbar() {
               >
                 <Avatar>
                   <AvatarFallback className="bg-primary text-primary-foreground">
-                    hello ...
+                    {user?.name?.charAt(0) ?? "U"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -53,13 +62,16 @@ export function Navbar() {
             <DropdownMenuContent align="end">
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{"user.name"}</p>
+                  <p className="text-sm font-medium">{user?.name ?? "Guest"}</p>
                   <p className="text-xs text-muted-foreground">
-                    {"user.email"}
+                    {user?.email ?? "-"}
                   </p>
                 </div>
               </div>
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handleLogout}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>

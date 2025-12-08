@@ -14,13 +14,14 @@ import { toast } from "@/lib/hooks/use-toast";
 import { LayoutDashboard } from "lucide-react";
 import axios from "axios";
 import { signin } from "@/api/auth";
+import { useUser } from "@/lib/hooks/useUserContext";
 
 export default function Signin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
+  const { setUser } = useUser();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -28,7 +29,7 @@ export default function Signin() {
     try {
       // Send login request to backend
 
-      const { message } = await signin(email, password);
+      const { message, user } = await signin(email, password);
 
       // success message
       toast({
@@ -40,6 +41,7 @@ export default function Signin() {
       // For testing, you can confirm cookie is set in browser DevTools -> Application -> Cookies
       console.log("Login successful, cookie should be set automatically");
 
+      setUser(user); // store user in context
       // navigate to dashboard
       navigate("/dashboard");
     } catch (err: any) {

@@ -1,10 +1,6 @@
 import api from "@/api/axios";
-import {
-  loginRequestSchema,
-  loginResponseSchema,
-  signupRequestSchema,
-  signupResponseSchema,
-} from "@/lib/zod/auth_schema";
+import { useUser } from "@/lib/hooks/useUserContext";
+import { loginRequestSchema, signupRequestSchema } from "@/lib/zod/auth_schema";
 export const signin = async (email: string, password: string) => {
   const validatedData = loginRequestSchema.parse({ email, password });
 
@@ -12,7 +8,7 @@ export const signin = async (email: string, password: string) => {
     withCredentials: true, // ✅ important to store cookie
   });
 
-  return loginResponseSchema.parse(res.data);
+  return res.data;
 };
 
 /** Signup user */
@@ -23,5 +19,5 @@ export const signup = async (name: string, email: string, password: string) => {
     withCredentials: true, // ✅ cookie is set automatically
   });
 
-  return signupResponseSchema.parse(res.data);
+  return res.data;
 };
