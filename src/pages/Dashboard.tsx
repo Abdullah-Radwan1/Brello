@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Plus, FolderKanban, BarChart3 } from "lucide-react";
 import { useProjects } from "@/lib/hooks/use_projects";
+import AddProject from "@/components/utils/AddProject";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -31,10 +32,7 @@ export default function Dashboard() {
               <BarChart3 className="mr-2 h-4 w-4" />
               Analytics
             </Button>
-            <Button onClick={() => navigate("/projects/new")}>
-              <Plus className="mr-2 h-4 w-4" />
-              New Project
-            </Button>
+            <AddProject />
           </div>
         </div>
 

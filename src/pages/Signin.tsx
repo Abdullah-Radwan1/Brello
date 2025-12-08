@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { toast } from "@/lib/hooks/use-toast";
 import { LayoutDashboard } from "lucide-react";
-import axios from "axios";
 import { signin } from "@/api/auth";
 import { useUser } from "@/lib/hooks/useUserContext";
 
@@ -37,8 +36,6 @@ export default function Signin() {
         description: message || "Logged in successfully",
       });
 
-      // NOTE: access_token is HTTP-only, cannot be read in JS
-      // For testing, you can confirm cookie is set in browser DevTools -> Application -> Cookies
       console.log("Login successful, cookie should be set automatically");
 
       setUser(user); // store user in context
