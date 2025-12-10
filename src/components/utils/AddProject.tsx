@@ -1,66 +1,113 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
-import { X, UserPlus } from "lucide-react";
+import { X, UserPlus, User, Loader2 } from "lucide-react";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import { useGetUsers } from "@/lib/hooks/useUsers";
+import { useDebounce } from "use-debounce";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createProject } from "@/api/projects";
+import { toast } from "@/lib/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
-const mockUsers = [
-  { id: 1, name: "Ahmed Khaled", email: "ahmed@example.com" },
-  { id: 2, name: "Sara Mostafa", email: "sara@example.com" },
-  { id: 3, name: "John Doe", email: "john@example.com" },
-  { id: 4, name: "Maya Adel", email: "maya@example.com" },
-  { id: 5, name: "David Smith", email: "david@example.com" },
-];
+type User = { id: string; name: string };
 
-interface User {
-  id: number;
+// Payload for the backend
+type CreateProjectPayload = {
   name: string;
-  email: string;
-}
+  description?: string;
+  contributors?: { userId: string }[];
+};
 
 const AddProject = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
 
-  // Step 1 fields
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
-
-  // Step 2 fields
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-  const [query, setQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch] = useDebounce(searchInput, 500);
 
-  const filteredUsers = mockUsers.filter((user) =>
-    user.name.toLowerCase().includes(query.toLowerCase())
+  const page = 1;
+  const limit = 6;
+
+  const { data, isFetching } = useGetUsers(page, limit, debouncedSearch);
+
+  const users = useMemo(
+    () => (!isFetching && data ? data.users : []),
+    [data, isFetching]
   );
 
+  // -------------------- Mutation --------------------
+  const {
+    mutate: createProjectFn,
+    data: createProjectData,
+    isPending,
+  } = useMutation({
+    mutationFn: (payload: CreateProjectPayload) => createProject(payload),
+    onSuccess: (data) => {
+      resetForm();
+      setOpen(false);
+      toast({
+        title: "Success",
+        description: "Project created successfully!",
+      });
+
+      navigate(`/projects/${data.id}`);
+      queryClient.invalidateQueries({
+        queryKey: ["projects"],
+      });
+      // Optionally, refresh project list or show toast
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      }); // Optionally, show error toast
+    },
+  });
+
+  const handleCreateProject = () => {
+    if (!projectName || !description) return;
+
+    const contributorsPayload =
+      selectedUsers.length > 0
+        ? selectedUsers.map((user) => ({ userId: user.id }))
+        : undefined;
+
+    createProjectFn({
+      name: projectName,
+      description,
+      contributors: contributorsPayload,
+    });
+  };
+  console.log(createProjectData);
+  // -------------------- Handlers --------------------
   const addUser = (user: User) => {
     if (!selectedUsers.some((u) => u.id === user.id)) {
-      setSelectedUsers([...selectedUsers, user]);
+      setSelectedUsers((prev) => [...prev, user]);
     }
   };
 
-  const removeUser = (id: number) => {
-    setSelectedUsers(selectedUsers.filter((u) => u.id !== id));
+  const removeUser = (id: string) => {
+    setSelectedUsers((prev) => prev.filter((u) => u.id !== id));
   };
 
   const resetForm = () => {
     setProjectName("");
     setDescription("");
     setSelectedUsers([]);
-    setQuery("");
+    setSearchInput("");
     setStep(1);
   };
 
@@ -69,18 +116,9 @@ const AddProject = () => {
     if (!val) resetForm();
   };
 
-  const handleCreateProject = () => {
-    console.log({
-      projectName,
-      description,
-      selectedUsers,
-    });
-    setOpen(false);
-    resetForm();
-  };
+  const isStep1Valid = projectName.length >= 6 && description.length >= 10;
 
-  const isStep1Valid = projectName.length >= 4 && description.length >= 10;
-
+  // -------------------- JSX --------------------
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogTrigger asChild>
@@ -88,16 +126,15 @@ const AddProject = () => {
       </DialogTrigger>
 
       <DialogContent className="max-w-screen-md overflow-y-auto p-8 rounded-xl">
-        {/* Header */}
-        <div className="mb-6">
+        <div className="mb-4">
           <DialogTitle className="text-2xl font-semibold">
             {step === 1 ? "Create Project" : "Invite Contributors"}
           </DialogTitle>
         </div>
 
-        {/* Step 1: Project Details */}
+        {/* STEP 1 */}
         {step === 1 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 block">
                 Project Name
@@ -106,11 +143,11 @@ const AddProject = () => {
                 placeholder="Enter project name"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
-                minLength={4}
+                minLength={6}
                 maxLength={40}
               />
-              <p className="text-xs text-muted-foreground mt-2">
-                Must be 4-40 characters
+              <p className="text-xs text-muted-foreground mt-1">
+                Must be 6–40 characters
               </p>
             </div>
 
@@ -126,8 +163,8 @@ const AddProject = () => {
                 maxLength={150}
                 rows={4}
               />
-              <p className="text-xs text-muted-foreground mt-2">
-                Must be 10-150 characters
+              <p className="text-xs text-muted-foreground mt-1">
+                Must be 10–150 characters
               </p>
             </div>
 
@@ -141,42 +178,53 @@ const AddProject = () => {
           </div>
         )}
 
-        {/* Step 2: Invite Users */}
+        {/* STEP 2 */}
         {step === 2 && (
           <div className="space-y-6">
             <div>
-              <label className="text-sm font-medium mb-3 block">
-                Invite Users
-              </label>
+              <div className="border rounded-lg p-2">
+                <div className="relative">
+                  <User
+                    className="absolute left-2 top-2.5 text-muted-foreground"
+                    size={18}
+                  />
+                  <Input
+                    placeholder="Search users by name..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    className="pl-8 mb-2"
+                  />
+                  {isFetching && (
+                    <Loader2
+                      className="absolute right-2 top-2.5 animate-spin text-muted-foreground"
+                      size={18}
+                    />
+                  )}
+                </div>
 
-              <Command className="border rounded-lg">
-                <CommandInput
-                  placeholder="Search users by name..."
-                  value={query}
-                  onValueChange={setQuery}
-                />
-                <CommandEmpty>No users found</CommandEmpty>
-                <CommandGroup className="max-h-60 overflow-y-auto">
-                  {filteredUsers.map((user) => (
-                    <CommandItem
-                      key={user.id}
-                      onSelect={() => addUser(user)}
-                      className="flex items-center justify-between py-3"
-                    >
-                      <div>
-                        <span className="font-medium">{user.name}</span>
-                        <span className="text-muted-foreground text-sm ml-2">
-                          {user.email}
+                <div className="max-h-60 overflow-y-auto">
+                  {!isFetching && users.length === 0 ? (
+                    <p className="text-sm text-muted-foreground p-2">
+                      No users found
+                    </p>
+                  ) : (
+                    users.map((user) => (
+                      <div
+                        key={user.id}
+                        onClick={() => addUser(user)}
+                        className="flex items-center justify-between py-2 px-3 hover:bg-gray-100 cursor-pointer rounded-md"
+                      >
+                        <span className="text-foreground text-sm font-medium">
+                          {user.name}
                         </span>
+                        <UserPlus size={18} className="text-muted-foreground" />
                       </div>
-                      <UserPlus size={18} className="text-muted-foreground" />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Selected Users */}
             {selectedUsers.length > 0 && (
               <div>
                 <label className="text-sm font-medium mb-3 block">
@@ -187,7 +235,7 @@ const AddProject = () => {
                     <Badge
                       key={user.id}
                       variant="secondary"
-                      className="px-3 py-2 flex items-center gap-2"
+                      className="px-3 py-2 flex items-center gap-2 bg-slate-100 text-slate-700"
                     >
                       <span>{user.name}</span>
                       <X
@@ -201,12 +249,17 @@ const AddProject = () => {
               </div>
             )}
 
-            {/* Navigation Buttons */}
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>
                 Back
               </Button>
-              <Button onClick={handleCreateProject}>Create Project</Button>
+              <Button onClick={handleCreateProject} disabled={isPending}>
+                {isPending ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  "Create Project"
+                )}
+              </Button>
             </div>
           </div>
         )}

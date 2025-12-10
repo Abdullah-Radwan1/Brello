@@ -10,16 +10,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/lib/hooks/useUserContext";
+import { signout } from "@/api/auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function Navbar() {
+  const queryClient = useQueryClient();
   const { theme, setTheme } = useTheme();
   const { user, setUser } = useUser();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     // Optionally, call /auth/logout endpoint to clear cookie
+    signout();
     setUser(null);
     navigate("/signin");
+    queryClient.clear();
   };
 
   return (

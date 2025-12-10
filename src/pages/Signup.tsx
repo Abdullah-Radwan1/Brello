@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/card";
 import { toast } from "@/lib/hooks/use-toast";
 import { LayoutDashboard } from "lucide-react";
-import axios from "axios";
 import { signup } from "@/api/auth";
+import { ZodError } from "zod";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -33,19 +33,24 @@ export default function Register() {
       // success message
       toast({
         title: "Success",
-        description: message || "Logged in successfully",
+        description: message || "Signed up successfully",
       });
 
       // NOTE: access_token is HTTP-only, cannot be read in JS
       // For testing, you can confirm cookie is set in browser DevTools -> Application -> Cookies
-      console.log("Login successful, cookie should be set automatically");
+      console.log("Sign up successful, cookie should be set automatically");
 
       // navigate to dashboard
       navigate("/dashboard");
-    } catch (err: any) {
+    } catch (err: ZodError | any) {
+      // Convert Zod issues into a readable string
+      const errorMessage = err.errors
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+
       toast({
-        title: "Error",
-        description: err.response?.data?.message || "Invalid credentials",
+        title: "Validation Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -76,6 +81,7 @@ export default function Register() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                min={2}
               />
             </div>
             <div className="space-y-2">
@@ -97,6 +103,7 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                min={6}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

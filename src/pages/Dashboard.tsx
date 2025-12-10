@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, FolderKanban, BarChart3 } from "lucide-react";
+import { FolderKanban, BarChart3 } from "lucide-react";
 import { useProjects } from "@/lib/hooks/use_projects";
 import AddProject from "@/components/utils/AddProject";
 

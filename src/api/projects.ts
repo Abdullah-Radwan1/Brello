@@ -24,3 +24,14 @@ export const fetchProjects = async (): Promise<Project[]> => {
 
   return projectsResponseSchema.parse(res.data); // validate response
 };
+
+export const createProject = async (data: {
+  name: string;
+  description?: string;
+  contributors?: { userId: string }[];
+}) => {
+  const res = await api.post("/projects", data, {
+    withCredentials: true,
+  });
+  return projectSchema.parse(res.data);
+};
